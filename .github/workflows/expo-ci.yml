@@ -1,0 +1,37 @@
+name: Expo CI
+
+on:
+  push:
+    branches: [ main, master ] # Adjust if your main branch has a different name
+  pull_request:
+    branches: [ main, master ] # Adjust if your main branch has a different name
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Expo generally works well with LTS versions like 18.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Check Expo project health
+        run: npx expo doctor
+
+      # Optional: If you want to actually try to start the bundler (it won't stay running in CI without specific setup)
+      # You could try a command that exits, like checking if it can start and then immediately stopping it.
+      # For a true "dev build" in the sense of a development client, you'd use EAS Build.
+      # This step just verifies the project can attempt to start with the local CLI.
+      - name: Attempt to start Expo (and immediately exit - for CI check)
+        run: CI=1 npx expo start --non-interactive & PID=$! && sleep 30 && kill $PID
+        # The above line starts expo in non-interactive mode, waits 30s, then kills it.
+        # This is a basic check to see if the bundler initializes without immediate crashing.
+        # A more robust check might involve `expo export:web` if web is a target, or specific tests.
+
